@@ -106,7 +106,7 @@ class nocopy_t {
 #   include <libkern/OSAtomic.h>
 #   include <libkern/OSCacheControl.h>
 #   include <System/pthread_machdep.h>
-#   include "objc-probes.h"  // generated dtrace probe definitions.
+//#   include "objc-probes.h"  // generated dtrace probe definitions.
 
 // Some libc functions call objc_msgSend() 
 // so we can't use them without deadlocks.
