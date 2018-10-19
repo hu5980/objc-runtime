@@ -411,18 +411,25 @@ objc_object::clearDeallocating()
 }
 
 
+/**
+ dealloc 函数 实现
+ */
 inline void
 objc_object::rootDealloc()
 {
+    // 如果是TaggedPointer 类型的直接返回
     if (isTaggedPointer()) return;  // fixme necessary?
 
+    // 对象是否可以直接释放的条件
+    // nonpointer 是否是nonpointer 的，weakly_referenced 是否有弱引用表 ，has_assoc 是否有关联对象，has_cxx_dtor 是否有C++ 的代码，是否ARC 管理内存，has_sidetable_rc引用计数是否是引用计数表 管理的
     if (fastpath(isa.nonpointer  &&  
                  !isa.weakly_referenced  &&  
                  !isa.has_assoc  &&  
                  !isa.has_cxx_dtor  &&  
-                 !isa.has_sidetable_rc))
+                 !isa.has_sidetable_rc))  
     {
         assert(!sidetable_present());
+        //直接释放
         free(this);
     } 
     else {

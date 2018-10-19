@@ -322,6 +322,7 @@ storeWeak(id *location, objc_object *newObj)
     assert(haveOld  ||  haveNew);
     if (!haveNew) assert(newObj == nil);
 
+    // 定义局部变量
     Class previouslyInitializedClass = nil;
     id oldObj;
     SideTable *oldTable;
@@ -453,6 +454,14 @@ objc_storeWeakOrNil(id *location, id newObj)
  *
  * @param location Address of __weak ptr. 
  * @param newObj Object ptr. 
+ */
+
+/**
+ weak 调用函数
+
+ @param location 弱引用变量
+ @param newObj 被弱引用 的对象
+ @return <#return value description#>
  */
 id
 objc_initWeak(id *location, id newObj)
@@ -1457,19 +1466,30 @@ objc_object::sidetable_getExtraRC_nolock()
 #endif
 
 
+/**
+ iOS retain 实现
+
+ @return
+ */
 id
 objc_object::sidetable_retain()
 {
+    // 判断是否是支持 NONPOINTER_ISA
 #if SUPPORT_NONPOINTER_ISA
     assert(!isa.nonpointer);
 #endif
+    // 通过this 这个isa 指针找到相应的sidetable
     SideTable& table = SideTables()[this];
     
+    // 给sidetable加锁
     table.lock();
+    // 通过refcnts这个hash函数找到相应的size_t ，size_t是一个结构体
     size_t& refcntStorage = table.refcnts[this];
     if (! (refcntStorage & SIDE_TABLE_RC_PINNED)) {
-        refcntStorage += SIDE_TABLE_RC_ONE;
+        refcntStorage += SIDE_TABLE_RC_ONE; // 在size_t 里面加一 ，通过位移的形式
     }
+    
+    // 给sidetable解除加锁
     table.unlock();
 
     return (id)this;
@@ -1510,6 +1530,7 @@ objc_object::sidetable_tryRetain()
 uintptr_t
 objc_object::sidetable_retainCount()
 {
+    
     SideTable& table = SideTables()[this];
 
     size_t refcnt_result = 1;
@@ -1834,6 +1855,12 @@ objc_allocWithZone(Class cls)
 }
 
 
+
+/**
+ ios  dealloc 函数的实现入口
+
+ @param obj
+ */
 void
 _objc_rootDealloc(id obj)
 {
