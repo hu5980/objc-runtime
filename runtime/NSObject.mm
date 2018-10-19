@@ -381,13 +381,15 @@ storeWeak(id *location, objc_object *newObj)
 
     // Assign new value, if any.
     if (haveNew) {
+        //注册一个新的(对象，弱指针)对。创建一个新的弱引用
         newObj = (objc_object *)
             weak_register_no_lock(&newTable->weak_table, (id)newObj, location, 
                                   crashIfDeallocating);
         // weak_register_no_lock returns nil if weak store should be rejected
-
+        // 如果弱存储被拒绝，weak_register_no_lock返回nil
         // Set is-weakly-referenced bit in refcount table.
         if (newObj  &&  !newObj->isTaggedPointer()) {
+            //设置弱引用标记位
             newObj->setWeaklyReferenced_nolock();
         }
 

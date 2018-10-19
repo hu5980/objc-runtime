@@ -310,6 +310,7 @@ weak_entry_for_referent(weak_table_t *weak_table, objc_object *referent)
 {
     assert(referent);
 
+    // 获取弱引用的数组
     weak_entry_t *weak_entries = weak_table->weak_entries;
 
     if (!weak_entries) return nil;
@@ -387,6 +388,15 @@ weak_unregister_no_lock(weak_table_t *weak_table, id referent_id,
  * @param referent The object pointed to by the weak reference.
  * @param referrer The weak pointer address.
  */
+
+/**
+ 注册一个新的(对象，弱指针)对。创建一个新的弱
+ *对象条目如果不存在。
+ *
+ * @param weak_table全局弱表。
+ * @param referent_id 弱引用指向的对象
+ * @param *referrer_id 引用弱指针地址
+ */
 id 
 weak_register_no_lock(weak_table_t *weak_table, id referent_id, 
                       id *referrer_id, bool crashIfDeallocating)
@@ -426,7 +436,9 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id,
 
     // now remember it and where it is being stored
     weak_entry_t *entry;
+    //weak_entry_for_referent 通过原对象指针 在weak_table中查找所对应的弱引用数组
     if ((entry = weak_entry_for_referent(weak_table, referent))) {
+        // 添加进entry
         append_referrer(entry, referrer);
     } 
     else {
