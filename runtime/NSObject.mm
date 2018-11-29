@@ -714,11 +714,11 @@ class AutoreleasePoolPage
 #endif
     static size_t const COUNT = SIZE / sizeof(id);
 
-    magic_t const magic;
-    id *next;
-    pthread_t const thread;
-    AutoreleasePoolPage * const parent;
-    AutoreleasePoolPage *child;
+    magic_t const magic; //用于数据校验
+    id *next;  //栈顶地址
+    pthread_t const thread;//所在的线程
+    AutoreleasePoolPage * const parent;//父对象
+    AutoreleasePoolPage *child;//子对象
     uint32_t const depth;
     uint32_t hiwat;
 

@@ -470,11 +470,13 @@ weak_is_registered_no_lock(weak_table_t *weak_table, id referent_id)
  * @param weak_table 
  * @param referent The object being deallocated. 
  */
+// weak 设置为nil
 void 
 weak_clear_no_lock(weak_table_t *weak_table, id referent_id) 
 {
     objc_object *referent = (objc_object *)referent_id;
 
+    // 通过被废弃的指针 通过hash算法的计算 找到弱引用数组所在的索引位置
     weak_entry_t *entry = weak_entry_for_referent(weak_table, referent);
     if (entry == nil) {
         /// XXX shouldn't happen, but does with mismatched CF/objc
