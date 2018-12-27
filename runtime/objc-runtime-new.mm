@@ -758,6 +758,7 @@ static void methodizeClass(Class cls)
 **********************************************************************/
 static void remethodizeClass(Class cls)
 {
+    // 分类列表
     category_list *cats;
     bool isMeta;
 

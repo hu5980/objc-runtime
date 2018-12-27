@@ -332,12 +332,14 @@ storeWeak(id *location, objc_object *newObj)
     // Order by lock address to prevent lock ordering problems. 
     // Retry if the old value changes underneath us.
  retry:
+    // 如果haveOld 为真 ，则设置oldObj 为*location  ，oldTable 为&SideTables()[oldObj]
     if (haveOld) {
         oldObj = *location;
         oldTable = &SideTables()[oldObj];
     } else {
         oldTable = nil;
     }
+    // 如果haveNew 为真，newTable 为&SideTables()[oldObj]
     if (haveNew) {
         newTable = &SideTables()[newObj];
     } else {
@@ -354,8 +356,11 @@ storeWeak(id *location, objc_object *newObj)
     // Prevent a deadlock between the weak reference machinery
     // and the +initialize machinery by ensuring that no 
     // weakly-referenced object has an un-+initialized isa.
+    // 是否有新对象 并且传递进来的新对象是有值的
     if (haveNew  &&  newObj) {
+        //根据当前对象 获取isa 指针来找到它的类对象
         Class cls = newObj->getIsa();
+      
         if (cls != previouslyInitializedClass  &&  
             !((objc_class *)cls)->isInitialized()) 
         {
@@ -375,6 +380,7 @@ storeWeak(id *location, objc_object *newObj)
     }
 
     // Clean up old value, if any.
+    // 如果有老的，则将老值Clean up
     if (haveOld) {
         weak_unregister_no_lock(&oldTable->weak_table, oldObj, location);
     }
@@ -472,7 +478,6 @@ objc_initWeak(id *location, id newObj)
         *location = nil;
         return nil;
     }
-
     return storeWeak<DontHaveOld, DoHaveNew, DoCrashIfDeallocating>
         (location, (objc_object*)newObj);
 }
