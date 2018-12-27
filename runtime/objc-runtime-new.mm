@@ -623,14 +623,17 @@ attachCategories(Class cls, category_list *cats, bool flush_caches)
 {
     if (!cats) return;
     if (PrintReplacedMethods) printReplacements(cls, cats);
-
+    //是否是元类
     bool isMeta = cls->isMetaClass();
 
     // fixme rearrange to remove these intermediate allocations
+    // 给未绑定到宿主类的分类中的方法分配内存
     method_list_t **mlists = (method_list_t **)
         malloc(cats->count * sizeof(*mlists));
+    // 给未绑定到宿主类的分类中的属性分配内存
     property_list_t **proplists = (property_list_t **)
         malloc(cats->count * sizeof(*proplists));
+    // 给未绑定到宿主类的分类中的协议分配内存
     protocol_list_t **protolists = (protocol_list_t **)
         malloc(cats->count * sizeof(*protolists));
 
@@ -640,6 +643,7 @@ attachCategories(Class cls, category_list *cats, bool flush_caches)
     int protocount = 0;
     int i = cats->count;
     bool fromBundle = NO;
+    // 倒序添加
     while (i--) {
         auto& entry = cats->list[i];
 
@@ -664,6 +668,7 @@ attachCategories(Class cls, category_list *cats, bool flush_caches)
     auto rw = cls->data();
 
     prepareMethodLists(cls, mlists, mcount, NO, fromBundle);
+    //添加分类中的方法到宿主类中
     rw->methods.attachLists(mlists, mcount);
     free(mlists);
     if (flush_caches  &&  mcount > 0) flushCaches(cls);
@@ -756,6 +761,7 @@ static void methodizeClass(Class cls)
 * Updates method caches for cls and its subclasses.
 * Locking: runtimeLock must be held by the caller
 **********************************************************************/
+// 分类方法的添加
 static void remethodizeClass(Class cls)
 {
     // 分类列表
@@ -763,16 +769,17 @@ static void remethodizeClass(Class cls)
     bool isMeta;
 
     runtimeLock.assertWriting();
-
+    // 当前类是不是元类
     isMeta = cls->isMetaClass();
 
     // Re-methodizing: check for more categories
+    // 返回类的未附加类别列表
     if ((cats = unattachedCategoriesForClass(cls, false/*not realizing*/))) {
         if (PrintConnecting) {
             _objc_inform("CLASS: attaching categories to class '%s' %s", 
                          cls->nameForLogging(), isMeta ? "(meta)" : "");
         }
-        
+        // 将未添加的分类添加到宿主类上
         attachCategories(cls, cats, true /*flush caches*/);        
         free(cats);
     }
@@ -2552,14 +2559,21 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
 
     ts.log("IMAGE TIMES: realize future classes");
 
-    // Discover categories. 
+    // Discover categories.
+    // 这个for循环 会将所有的分类动态加载进来
+//    hIndex = 0;         \
+//    hIndex < hCount && (hi = hList[hIndex]); \
+//    hIndex++
     for (EACH_HEADER) {
+        //获取类有多少分类 ，把数量存到count中
+        // [*category_t,*category_t,*category_t]
         category_t **catlist = 
             _getObjc2CategoryList(hi, &count);
         bool hasClassProperties = hi->info()->hasCategoryClassProperties();
-
+        
         for (i = 0; i < count; i++) {
             category_t *cat = catlist[i];
+            // 把这个分类给绑定cls 上
             Class cls = remapClass(cat->cls);
 
             if (!cls) {
