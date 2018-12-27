@@ -692,17 +692,32 @@ class list_array_tt {
         }
     }
 
+    
+    
+    /**
+     将方法添加到对应的宿主类上面
+     @param addedLists 二维数组
+     @param addedCount 二维数组个数
+     addedLists 传递过来的二维数组
+     [[method,method],[method,method,method],....]
+     */
     void attachLists(List* const * addedLists, uint32_t addedCount) {
         if (addedCount == 0) return;
 
         if (hasArray()) {
             // many lists -> many lists
+            // 列表当中原有元素的个数
             uint32_t oldCount = array()->count;
+            // 拼接后新的元素的个数
             uint32_t newCount = oldCount + addedCount;
+            // 根据新总数重新分配内存
             setArray((array_t *)realloc(array(), array_t::byteSize(newCount)));
+            // 修改元素总数
             array()->count = newCount;
+            // 移动原来方法在内存中的位置
             memmove(array()->lists + addedCount, array()->lists, 
                     oldCount * sizeof(array()->lists[0]));
+            // 将新添加的元素拷贝到原来方法移动后留出来的位置 ，所以会覆盖掉宿主类的方法
             memcpy(array()->lists, addedLists, 
                    addedCount * sizeof(array()->lists[0]));
         }

@@ -5440,6 +5440,7 @@ BOOL class_conformsToProtocol(Class cls, Protocol *proto_gen)
 * fixme
 * Locking: runtimeLock must be held by the caller
 **********************************************************************/
+// 添加方法
 static IMP 
 addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
 {
@@ -5451,25 +5452,32 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
     assert(cls->isRealized());
 
     method_t *m;
+    // getMethodNoSuper_nolock 获取方法 ，如果方法存在
     if ((m = getMethodNoSuper_nolock(cls, name))) {
         // already exists
-        if (!replace) {
+        if (!replace) { // 如果不替换
             result = m->imp;
-        } else {
+        } else { // 替换imp
             result = _method_setImplementation(cls, m, imp);
         }
-    } else {
+    } else { // 方法不存在的情况
         // fixme optimize
+        // 1.声明一个method_list_t 变量
         method_list_t *newlist;
+        // 2.分配内存
         newlist = (method_list_t *)calloc(sizeof(*newlist), 1);
         newlist->entsizeAndFlags = 
             (uint32_t)sizeof(method_t) | fixed_up_method_list;
         newlist->count = 1;
+        //设置newlist 第一个方法的name ，types，imp
         newlist->first.name = name;
         newlist->first.types = strdupIfMutable(types);
         newlist->first.imp = imp;
 
+        //自己添加的方法，覆盖了系统的方法（例如 retain ，release）进行特殊处理
         prepareMethodLists(cls, &newlist, 1, NO, NO);
+        // cls->data() 获取宿主类中的rw数据，其中包含宿主类的方法列表信息
+        // methods.attachLists 将方法添加到对应的宿主类上面
         cls->data()->methods.attachLists(&newlist, 1);
         flushCaches(cls);
 
@@ -5479,12 +5487,13 @@ addMethod(Class cls, SEL name, IMP imp, const char *types, bool replace)
     return result;
 }
 
-
-BOOL 
+// 给类添加方法
+BOOL
 class_addMethod(Class cls, SEL name, IMP imp, const char *types)
 {
+    // 如果类不存在 则直接返回
     if (!cls) return NO;
-
+    //加锁
     rwlock_writer_t lock(runtimeLock);
     return ! addMethod(cls, name, imp, types ?: "", NO);
 }
